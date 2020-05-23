@@ -4,6 +4,7 @@ from cookiespool.db import RedisClient
 
 conn = RedisClient('accounts', 'weibo')
 
+
 def set(account, sep='----'):
     username, password = account.split(sep)
     result = conn.set(username, password)
@@ -22,3 +23,6 @@ def scan():
 
 if __name__ == '__main__':
     scan()
+
+
+

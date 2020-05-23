@@ -1,7 +1,4 @@
 import json
-from selenium import webdriver
-from selenium.webdriver import DesiredCapabilities
-from cookiespool.config import *
 from cookiespool.db import RedisClient
 from login.weibo.cookies import WeiboCookies
 
@@ -16,28 +13,10 @@ class CookiesGenerator(object):
         self.website = website
         self.cookies_db = RedisClient('cookies', self.website)
         self.accounts_db = RedisClient('accounts', self.website)
-        self.init_browser()
 
-    def __del__(self):
-        self.close()
-    
-    def init_browser(self):
-        """
-        通过browser参数初始化全局浏览器供模拟登录使用
-        :return:
-        """
-        if BROWSER_TYPE == 'PhantomJS':
-            caps = DesiredCapabilities.PHANTOMJS
-            caps[
-                "phantomjs.page.settings.userAgent"] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36'
-            self.browser = webdriver.PhantomJS(desired_capabilities=caps)
-            self.browser.set_window_size(1400, 500)
-        elif BROWSER_TYPE == 'Chrome':
-            self.browser = webdriver.Chrome()
-    
     def new_cookies(self, username, password):
         """
-        新生成Cookies，子类需要重写
+        新生成Cookies，子类一定需要重写
         :param username: 用户名
         :param password: 密码
         :return:
@@ -70,39 +49,27 @@ class CookiesGenerator(object):
                 result = self.new_cookies(username, password)
                 # 成功获取
                 if result.get('status') == 1:
-                    cookies = self.process_cookies(result.get('content'))
+                    # cookies = self.process_cookies(result.get('content'))
+                    cookies = result.get('content')
                     print('成功获取到Cookies', cookies)
                     if self.cookies_db.set(username, json.dumps(cookies)):
                         print('成功保存Cookies')
                 # 密码错误，移除账号
                 elif result.get('status') == 2:
-                    print(result.get('content'))
+                    print("reason: {}".format(result.get('content')))
                     if self.accounts_db.delete(username):
-                        print('成功删除账号')
+                        print('成功删除账号: {}'.format(username))
                 else:
-                    print(result.get('content'))
+                    print("其他错误: {}".format(result.get('content')))
         else:
             print('所有账号都已经成功获取Cookies')
     
-    def close(self):
-        """
-        关闭
-        :return:
-        """
-        try:
-            print('Closing Browser')
-            self.browser.close()
-            del self.browser
-        except TypeError:
-            print('Browser not opened')
-
 
 class WeiboCookiesGenerator(CookiesGenerator):
     def __init__(self, website='weibo'):
         """
         初始化操作
         :param website: 站点名称
-        :param browser: 使用的浏览器
         """
         CookiesGenerator.__init__(self, website)
         self.website = website
@@ -114,7 +81,7 @@ class WeiboCookiesGenerator(CookiesGenerator):
         :param password: 密码
         :return: 用户名和Cookies
         """
-        return WeiboCookies(username, password, self.browser).main()
+        return WeiboCookies(username, password).main()
 
 
 if __name__ == '__main__':

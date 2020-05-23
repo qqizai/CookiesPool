@@ -1,7 +1,9 @@
 import json
 import requests
 from requests.exceptions import ConnectionError
-from cookiespool.db import *
+
+from cookiespool.config import TEST_URL_MAP
+from cookiespool.db import RedisClient
 
 
 class ValidTester(object):
@@ -45,5 +47,8 @@ class WeiboValidTester(ValidTester):
         except ConnectionError as e:
             print('发生异常', e.args)
 
+
 if __name__ == '__main__':
     WeiboValidTester().run()
+
+

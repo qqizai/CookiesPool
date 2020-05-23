@@ -1,15 +1,39 @@
 import json
 from flask import Flask, g
-from cookiespool.config import *
-from cookiespool.db import *
+from cookiespool.config import GENERATOR_MAP
+from cookiespool.db import RedisClient
+from cookiespool.generator import WeiboCookiesGenerator
+
 
 __all__ = ['app']
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def index():
-    return '<h2>Welcome to Cookie Pool System</h2>'
+    return """
+    <h2>Welcome to Cookie Pool System</h2>
+    <div>
+        <table>
+            <tr>
+                <td>接口名字</td>
+                <td>API</td>
+            </tr>
+            <tr>
+                <td>获取随机的Cookie, 访问地址如 /<website>/random</td>
+                <td><a href="/weibo/random" target="_blank">点击我进行获取一个随机Cookie</a></td>
+            </tr>
+            <tr>
+                <td>添加用户, 访问地址如 /<website>/add/<username>/<password></td>
+                <td><a href="/weibo/add/test@163.com/abc123" target="_blank">点击我进行添加账号密码：【test@163.com】【abc123】Cookie</a></td>
+            </tr>
+            <tr>
+                <td>获取Cookies总数, 如 /<website>/count</td>
+                <td><a href="/weibo/count" target="_blank">点击我进行获取微博的cookie总数Cookie</a></td>
+            </tr>
+        </table>
+    </div>"""
 
 
 def get_conn():
@@ -18,7 +42,6 @@ def get_conn():
     :return:
     """
     for website in GENERATOR_MAP:
-        print(website)
         if not hasattr(g, website):
             setattr(g, website + '_cookies', eval('RedisClient' + '("cookies", "' + website + '")'))
             setattr(g, website + '_accounts', eval('RedisClient' + '("accounts", "' + website + '")'))
@@ -46,8 +69,12 @@ def add(website, username, password):
     :return: 
     """
     g = get_conn()
-    print(username, password)
+    print(f"添加新账号 username：{username} password：{password}")
     getattr(g, website + '_accounts').set(username, password)
+    _cls = GENERATOR_MAP.get(website, "")
+    if _cls:
+        generator = eval(_cls + '(website="' + website + '")')
+        generator.run()
     return json.dumps({'status': '1'})
 
 
