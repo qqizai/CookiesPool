@@ -1,11 +1,12 @@
 # Redis数据库地址
-REDIS_HOST = "localhost"
+# REDIS_HOST = "localhost"
+REDIS_HOST = "192.168.1.50"
 
 # Redis端口
 REDIS_PORT = 6379
 
 # Redis密码，如无填None
-REDIS_PASSWORD = ""
+REDIS_PASSWORD = "12345678"
 
 # 产生器类，如扩展其他站点，请在此配置
 GENERATOR_MAP = {
